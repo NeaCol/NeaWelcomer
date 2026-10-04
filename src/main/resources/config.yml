@@ -1,0 +1,73 @@
+# ╔══════════════════════════════════════════════════════════════╗
+# ║                    NeaWelcomer v1.0.0                       ║
+# ║              Plugin de Bienvenida para Purpur               ║
+# ║                   Minecraft 1.21.1                          ║
+# ╚══════════════════════════════════════════════════════════════╝
+
+# ─────────────────────────────────────────────
+#  Configuración General
+# ─────────────────────────────────────────────
+
+# Desactivar los mensajes por defecto de Minecraft (join/quit)
+# Esto elimina el típico "Player joined the game" / "Player left the game"
+disable-default-messages: true
+
+# Soporte para PlaceholderAPI (requiere el plugin PlaceholderAPI)
+# Permite usar placeholders como %player_name%, %vault_prefix%, etc.
+placeholderapi: true
+
+# ─────────────────────────────────────────────
+#  Módulo: Primera Entrada
+# ─────────────────────────────────────────────
+# Se activa cuando un jugador entra al servidor por primera vez.
+
+first-join:
+  enabled: true
+  # Enviar mensaje a todos los jugadores conectados
+  broadcast: true
+
+# ─────────────────────────────────────────────
+#  Módulo: Entrada
+# ─────────────────────────────────────────────
+# Se activa cada vez que un jugador se conecta (excepto primera vez).
+
+join:
+  enabled: true
+  broadcast: true
+
+# ─────────────────────────────────────────────
+#  Módulo: Salida
+# ─────────────────────────────────────────────
+# Se activa cuando un jugador se desconecta.
+
+quit:
+  enabled: true
+  broadcast: true
+
+# ─────────────────────────────────────────────
+#  Sonidos
+# ─────────────────────────────────────────────
+# Reproduce un sonido cuando ocurre un evento.
+# Lista de sonidos: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html
+
+sounds:
+  # Sonido al entrar por primera vez
+  first-join:
+    enabled: false
+    sound: "ENTITY_PLAYER_LEVELUP"
+    volume: 1.0
+    pitch: 1.0
+
+  # Sonido al entrar
+  join:
+    enabled: false
+    sound: "ENTITY_EXPERIENCE_ORB_PICKUP"
+    volume: 1.0
+    pitch: 1.0
+
+  # Sonido al salir
+  quit:
+    enabled: false
+    sound: "BLOCK_NOTE_BLOCK_BASS"
+    volume: 1.0
+    pitch: 1.0

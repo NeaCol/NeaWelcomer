@@ -1,0 +1,112 @@
+# ╔══════════════════════════════════════════════════════════════╗
+# ║                  NeaWelcomer - Lang File                     ║
+# ║                   Archivo de Idioma                          ║
+# ╚══════════════════════════════════════════════════════════════╝
+#
+# Formato: MiniMessage (https://docs.advntr.dev/minimessage/format.html)
+#
+# ┌─────────────────────────────────────────────────────────┐
+# │                   COLORES HEX                           │
+# │  <#FF5555>Texto rojo</#FF5555>                          │
+# │  <color:#7C4DFF>Texto morado</color>                    │
+# ├─────────────────────────────────────────────────────────┤
+# │                  GRADIENTES                             │
+# │  <gradient:#FF0000:#00FF00>Texto gradiente</gradient>   │
+# │  <gradient:#7C4DFF:#00BCD4>Texto cool</gradient>        │
+# ├─────────────────────────────────────────────────────────┤
+# │                   ESTILOS                               │
+# │  <bold>Negrita</bold>                                   │
+# │  <italic>Cursiva</italic>                               │
+# │  <underlined>Subrayado</underlined>                     │
+# │  <strikethrough>Tachado</strikethrough>                 │
+# │  <obfuscated>Ofuscado</obfuscated>                     │
+# ├─────────────────────────────────────────────────────────┤
+# │                INTERACTIVOS                             │
+# │  <hover:show_text:'<#AAAAAA>Texto hover'>Texto</hover> │
+# │  <click:run_command:/cmd>Texto</click>                  │
+# │  <click:suggest_command:/cmd>Texto</click>              │
+# │  <click:open_url:'https://url'>Texto</click>           │
+# ├─────────────────────────────────────────────────────────┤
+# │                COLORES NOMBRADOS                        │
+# │  <red>, <green>, <blue>, <yellow>, <gold>,             │
+# │  <aqua>, <dark_red>, <dark_green>, <dark_aqua>,        │
+# │  <dark_blue>, <dark_purple>, <light_purple>,            │
+# │  <white>, <gray>, <dark_gray>, <black>                  │
+# ├─────────────────────────────────────────────────────────┤
+# │                PLACEHOLDERS                             │
+# │  {player}       - Nombre del jugador                    │
+# │  {displayname}  - Nombre visible del jugador            │
+# │  {rank}         - Rango (requiere PlaceholderAPI +      │
+# │                   plugin de permisos como LuckPerms)    │
+# │  {player_number}- Número de jugador único que se une    │
+# │  {online}       - Jugadores conectados                  │
+# │  {max_players}  - Máximo de jugadores del servidor      │
+# └─────────────────────────────────────────────────────────┘
+
+# ─── Prefijo global del plugin ───────────────────────────────
+prefix: "<#7C4DFF><bold>Nea</bold><#B388FF>Welcomer <dark_gray>» <reset>"
+
+# ─── Mensaje de primera entrada ──────────────────────────────
+# Se muestra cuando un jugador entra por primera vez al servidor.
+first-join:
+  # Mensaje que se envía a todos los jugadores
+  broadcast:
+    - ""
+    - "  <gradient:#7C4DFF:#B388FF><bold>★</bold></gradient> <#E0E0E0>{player} <#9E9E9E>ha ingresado por <gradient:#FFD54F:#FFA726><bold>primera vez</bold></gradient>"
+    - "  <dark_gray>   ¡Es el jugador número <#7C4DFF><bold>#{player_number}</bold> <dark_gray>en el servidor!"
+    - ""
+
+  # Mensaje privado que recibe solo el jugador que entró por primera vez
+  # Déjalo vacío [] para desactivar
+  private:
+    - ""
+    - "  <gradient:#7C4DFF:#00BCD4><bold><strikethrough>                                          </strikethrough></bold></gradient>"
+    - ""
+    - "  <gradient:#7C4DFF:#B388FF><bold>¡Bienvenido!</bold></gradient>"
+    - ""
+    - "  <#BDBDBD>Es tu primera vez en el servidor."
+    - "  <#BDBDBD>¡Eres el jugador número <#7C4DFF><bold>#{player_number}</bold> <#BDBDBD>en unirse!"
+    - "  <#BDBDBD>¡Esperamos que la pases genial!"
+    - ""
+    - "  <#9E9E9E>Jugadores en línea: <#7C4DFF>{online}<#9E9E9E>/<#7C4DFF>{max_players}"
+    - ""
+    - "  <gradient:#7C4DFF:#00BCD4><bold><strikethrough>                                          </strikethrough></bold></gradient>"
+    - ""
+
+# ─── Mensaje de entrada ─────────────────────────────────────
+# Se muestra cuando un jugador entra al servidor (no primera vez).
+join:
+  broadcast:
+    - " <#4CAF50><bold>+</bold> <#E0E0E0>{player} <#9E9E9E>ha ingresado"
+
+  # Mensaje privado que recibe solo el jugador al entrar
+  # Déjalo vacío [] para desactivar
+  private:
+    - ""
+    - "  <gradient:#7C4DFF:#00BCD4><bold><strikethrough>                                          </strikethrough></bold></gradient>"
+    - ""
+    - "  <#E0E0E0>¡Bienvenido de vuelta, <#7C4DFF>{player}<#E0E0E0>!"
+    - "  <#9E9E9E>Rango: <#B388FF>{rank}"
+    - "  <#9E9E9E>Jugadores en línea: <#7C4DFF>{online}<#9E9E9E>/<#7C4DFF>{max_players}"
+    - ""
+    - "  <gradient:#7C4DFF:#00BCD4><bold><strikethrough>                                          </strikethrough></bold></gradient>"
+    - ""
+
+# ─── Mensaje de salida ──────────────────────────────────────
+# Se muestra cuando un jugador sale del servidor.
+quit:
+  broadcast:
+    - " <#F44336><bold>-</bold> <#E0E0E0>{player} <#9E9E9E>se ha salido"
+
+# ─── Mensajes del comando /neawelcomer ───────────────────────
+commands:
+  reload-success: "{prefix}<#4CAF50>Configuración y lenguaje recargados correctamente."
+  reload-fail: "{prefix}<#F44336>Error al recargar la configuración."
+  no-permission: "{prefix}<#F44336>No tienes permiso para ejecutar este comando."
+  help:
+    - ""
+    - "  <gradient:#7C4DFF:#B388FF><bold>NeaWelcomer</bold></gradient> <dark_gray>- <#9E9E9E>Comandos"
+    - ""
+    - "  <#7C4DFF>/neawelcomer reload <dark_gray>- <#9E9E9E>Recarga la configuración"
+    - "  <#7C4DFF>/neawelcomer help <dark_gray>- <#9E9E9E>Muestra esta ayuda"
+    - ""

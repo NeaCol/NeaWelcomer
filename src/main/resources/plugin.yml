@@ -1,0 +1,31 @@
+name: NeaWelcomer
+version: 1.0.0
+main: com.neaplugins.welcomer.NeaWelcomer
+api-version: '1.21'
+description: Modern welcome & join/quit message plugin with MiniMessage & HEX color support
+author: NeaPlugins
+website: https://github.com/NeaPlugins/NeaWelcomer
+
+softdepend:
+  - PlaceholderAPI
+
+commands:
+  neawelcomer:
+    description: Main command for NeaWelcomer
+    aliases: [nw, welcomer]
+    usage: /<command> [reload]
+    permission: neawelcomer.admin
+
+permissions:
+  neawelcomer.admin:
+    description: Allows access to admin commands
+    default: op
+  neawelcomer.join.see:
+    description: See join messages
+    default: true
+  neawelcomer.quit.see:
+    description: See quit messages
+    default: true
+  neawelcomer.firstjoin.see:
+    description: See first join messages
+    default: true

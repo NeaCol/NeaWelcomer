@@ -120,6 +120,27 @@ public class LangManager {
     // ─── First-join messages ─────────────────────────────────
 
     /**
+     * Title shown to the player on their first join.
+     */
+    public String getFirstJoinTitle() {
+        return getMessage("first-join.title");
+    }
+
+    /**
+     * Subtitle shown to the player on their first join.
+     */
+    public String getFirstJoinSubtitle() {
+        return getMessage("first-join.subtitle");
+    }
+
+    /**
+     * Action bar message shown to the player on their first join.
+     */
+    public String getFirstJoinActionBar() {
+        return getMessage("first-join.actionbar");
+    }
+
+    /**
      * Broadcast lines shown to all players on a first join.
      */
     public List<String> getFirstJoinBroadcast() {
@@ -134,6 +155,27 @@ public class LangManager {
     }
 
     // ─── Join messages ───────────────────────────────────────
+
+    /**
+     * Title shown to the player on a normal join.
+     */
+    public String getJoinTitle() {
+        return getMessage("join.title");
+    }
+
+    /**
+     * Subtitle shown to the player on a normal join.
+     */
+    public String getJoinSubtitle() {
+        return getMessage("join.subtitle");
+    }
+
+    /**
+     * Action bar message shown to the player on a normal join.
+     */
+    public String getJoinActionBar() {
+        return getMessage("join.actionbar");
+    }
 
     /**
      * Broadcast lines shown to all players on a normal join.
@@ -160,6 +202,10 @@ public class LangManager {
 
     // ─── Command messages ────────────────────────────────────
 
+    public String getReloadMessage() {
+        return getMessage("commands.reload");
+    }
+
     public String getReloadSuccessMessage() {
         return getMessage("commands.reload-success");
     }
@@ -174,5 +220,19 @@ public class LangManager {
 
     public List<String> getHelpMessage() {
         return getMessageList("commands.help");
+    }
+
+    public List<String> getInfoMessage() {
+        return getMessageList("commands.info");
+    }
+
+    // ─── Error messages ──────────────────────────────────────
+
+    public String getPlayerOnlyMessage() {
+        return getMessage("errors.player-only");
+    }
+
+    public String getUnknownCommandMessage() {
+        return getMessage("errors.unknown-command");
     }
 }

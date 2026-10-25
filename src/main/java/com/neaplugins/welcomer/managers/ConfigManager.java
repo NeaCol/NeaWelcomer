@@ -11,12 +11,24 @@ public class ConfigManager {
     private boolean disableDefaultMessages;
 
     // First join
-    private boolean firstJoinEnabled;
-    private boolean firstJoinBroadcast;
+    private boolean firstJoinEnabled = true;
+    private boolean firstJoinBroadcast = true;
+    private boolean firstJoinPrivateMessage = true;
+    private boolean firstJoinTitleEnabled = true;
+    private long firstJoinTitleFadeIn = 10L;
+    private long firstJoinTitleStay = 70L;
+    private long firstJoinTitleFadeOut = 20L;
+    private boolean firstJoinActionBarEnabled = true;
 
     // Join
-    private boolean joinEnabled;
-    private boolean joinBroadcast;
+    private boolean joinEnabled = true;
+    private boolean joinBroadcast = true;
+    private boolean joinPrivateMessage = true;
+    private boolean joinTitleEnabled = true;
+    private long joinTitleFadeIn = 10L;
+    private long joinTitleStay = 70L;
+    private long joinTitleFadeOut = 20L;
+    private boolean joinActionBarEnabled = true;
 
     // Quit
     private boolean quitEnabled;
@@ -68,10 +80,46 @@ public class ConfigManager {
             "first-join.broadcast",
             true
         );
+        this.firstJoinPrivateMessage = config.getBoolean(
+            "first-join.private-message",
+            true
+        );
+        this.firstJoinTitleEnabled = config.getBoolean(
+            "first-join.title.enabled",
+            true
+        );
+        this.firstJoinTitleFadeIn = config.getLong(
+            "first-join.title.fade-in",
+            10L
+        );
+        this.firstJoinTitleStay = config.getLong(
+            "first-join.title.stay",
+            70L
+        );
+        this.firstJoinTitleFadeOut = config.getLong(
+            "first-join.title.fade-out",
+            20L
+        );
+        this.firstJoinActionBarEnabled = config.getBoolean(
+            "first-join.actionbar.enabled",
+            true
+        );
 
         // Join
         this.joinEnabled = config.getBoolean("join.enabled", true);
         this.joinBroadcast = config.getBoolean("join.broadcast", true);
+        this.joinPrivateMessage = config.getBoolean(
+            "join.private-message",
+            true
+        );
+        this.joinTitleEnabled = config.getBoolean("join.title.enabled", true);
+        this.joinTitleFadeIn = config.getLong("join.title.fade-in", 10L);
+        this.joinTitleStay = config.getLong("join.title.stay", 70L);
+        this.joinTitleFadeOut = config.getLong("join.title.fade-out", 20L);
+        this.joinActionBarEnabled = config.getBoolean(
+            "join.actionbar.enabled",
+            true
+        );
 
         // Quit
         this.quitEnabled = config.getBoolean("quit.enabled", true);
@@ -152,6 +200,34 @@ public class ConfigManager {
         return firstJoinBroadcast;
     }
 
+    public boolean isFirstJoinPrivateMessage() {
+        return firstJoinPrivateMessage;
+    }
+
+    public boolean isFirstJoinPrivateMessageEnabled() {
+        return firstJoinPrivateMessage;
+    }
+
+    public boolean isFirstJoinTitleEnabled() {
+        return firstJoinTitleEnabled;
+    }
+
+    public long getFirstJoinTitleFadeIn() {
+        return firstJoinTitleFadeIn;
+    }
+
+    public long getFirstJoinTitleStay() {
+        return firstJoinTitleStay;
+    }
+
+    public long getFirstJoinTitleFadeOut() {
+        return firstJoinTitleFadeOut;
+    }
+
+    public boolean isFirstJoinActionBarEnabled() {
+        return firstJoinActionBarEnabled;
+    }
+
     // ─── Join ───────────────────────────────────────────────────
 
     public boolean isJoinEnabled() {
@@ -160,6 +236,34 @@ public class ConfigManager {
 
     public boolean isJoinBroadcast() {
         return joinBroadcast;
+    }
+
+    public boolean isJoinPrivateMessage() {
+        return joinPrivateMessage;
+    }
+
+    public boolean isJoinPrivateMessageEnabled() {
+        return joinPrivateMessage;
+    }
+
+    public boolean isJoinTitleEnabled() {
+        return joinTitleEnabled;
+    }
+
+    public long getJoinTitleFadeIn() {
+        return joinTitleFadeIn;
+    }
+
+    public long getJoinTitleStay() {
+        return joinTitleStay;
+    }
+
+    public long getJoinTitleFadeOut() {
+        return joinTitleFadeOut;
+    }
+
+    public boolean isJoinActionBarEnabled() {
+        return joinActionBarEnabled;
     }
 
     // ─── Quit ───────────────────────────────────────────────────

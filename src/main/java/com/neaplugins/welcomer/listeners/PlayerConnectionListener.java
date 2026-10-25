@@ -9,6 +9,8 @@ import java.util.List;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.title.Title;
+import net.kyori.adventure.util.Ticks;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -82,9 +84,53 @@ public class PlayerConnectionListener implements Listener {
             broadcastMessages(broadcastLines, player, Permissions.FIRSTJOIN_SEE);
         }
 
-        // Send private welcome message only to the joining player
+        // Deliver private messages, title, and action bar delayed by 5 ticks
+        // so the player is fully loaded into the world
         List<String> privateLines = lang.getMessageList("first-join.private");
-        sendPrivateMessages(player, privateLines);
+        Bukkit.getScheduler().runTaskLater(
+            plugin,
+            () -> {
+                if (!player.isOnline()) {
+                    return;
+                }
+
+                // Send private messages
+                if (privateLines != null && !privateLines.isEmpty()) {
+                    for (String line : privateLines) {
+                        Component component = MessageUtils.parse(line, player);
+                        player.sendMessage(component);
+                    }
+                }
+
+                // Show Title & Subtitle
+                if (config.isFirstJoinTitleEnabled()) {
+                    Component titleComp = MessageUtils.parse(
+                        lang.getMessage("first-join.title"),
+                        player
+                    );
+                    Component subComp = MessageUtils.parse(
+                        lang.getMessage("first-join.subtitle"),
+                        player
+                    );
+                    Title.Times times = Title.Times.times(
+                        Ticks.duration(config.getFirstJoinTitleFadeIn()),
+                        Ticks.duration(config.getFirstJoinTitleStay()),
+                        Ticks.duration(config.getFirstJoinTitleFadeOut())
+                    );
+                    player.showTitle(Title.title(titleComp, subComp, times));
+                }
+
+                // Send ActionBar
+                if (config.isFirstJoinActionBarEnabled()) {
+                    String abRaw = lang.getMessage("first-join.actionbar");
+                    if (abRaw != null && !abRaw.isEmpty()) {
+                        Component actionbarComp = MessageUtils.parse(abRaw, player);
+                        player.sendActionBar(actionbarComp);
+                    }
+                }
+            },
+            5L
+        );
 
         // Play sound to online players with permission
         if (config.isFirstJoinSoundEnabled()) {
@@ -117,9 +163,53 @@ public class PlayerConnectionListener implements Listener {
             broadcastMessages(broadcastLines, player, Permissions.JOIN_SEE);
         }
 
-        // Send private welcome-back message only to the joining player
+        // Deliver private messages, title, and action bar delayed by 5 ticks
+        // so the player is fully loaded into the world
         List<String> privateLines = lang.getMessageList("join.private");
-        sendPrivateMessages(player, privateLines);
+        Bukkit.getScheduler().runTaskLater(
+            plugin,
+            () -> {
+                if (!player.isOnline()) {
+                    return;
+                }
+
+                // Send private messages
+                if (privateLines != null && !privateLines.isEmpty()) {
+                    for (String line : privateLines) {
+                        Component component = MessageUtils.parse(line, player);
+                        player.sendMessage(component);
+                    }
+                }
+
+                // Show Title & Subtitle
+                if (config.isJoinTitleEnabled()) {
+                    Component titleComp = MessageUtils.parse(
+                        lang.getMessage("join.title"),
+                        player
+                    );
+                    Component subComp = MessageUtils.parse(
+                        lang.getMessage("join.subtitle"),
+                        player
+                    );
+                    Title.Times times = Title.Times.times(
+                        Ticks.duration(config.getJoinTitleFadeIn()),
+                        Ticks.duration(config.getJoinTitleStay()),
+                        Ticks.duration(config.getJoinTitleFadeOut())
+                    );
+                    player.showTitle(Title.title(titleComp, subComp, times));
+                }
+
+                // Send ActionBar
+                if (config.isJoinActionBarEnabled()) {
+                    String abRaw = lang.getMessage("join.actionbar");
+                    if (abRaw != null && !abRaw.isEmpty()) {
+                        Component actionbarComp = MessageUtils.parse(abRaw, player);
+                        player.sendActionBar(actionbarComp);
+                    }
+                }
+            },
+            5L
+        );
 
         // Play sound to online players with permission
         if (config.isJoinSoundEnabled()) {
@@ -183,28 +273,6 @@ public class PlayerConnectionListener implements Listener {
             // Also send to console for logging
             Bukkit.getConsoleSender().sendMessage(component);
         }
-    }
-
-    /**
-     * Sends a list of private messages (parsed with MiniMessage + placeholders)
-     * only to the specified player.
-     */
-    private void sendPrivateMessages(Player player, List<String> lines) {
-        if (lines == null || lines.isEmpty()) return;
-
-        // Delay by 1 tick so the player is fully loaded into the server
-        Bukkit.getScheduler().runTaskLater(
-            plugin,
-            () -> {
-                if (player.isOnline()) {
-                    for (String line : lines) {
-                        Component component = MessageUtils.parse(line, player);
-                        player.sendMessage(component);
-                    }
-                }
-            },
-            5L
-        );
     }
 
     /**

@@ -4,6 +4,7 @@ import com.neaplugins.welcomer.commands.WelcomerCommand;
 import com.neaplugins.welcomer.listeners.PlayerConnectionListener;
 import com.neaplugins.welcomer.managers.ConfigManager;
 import com.neaplugins.welcomer.managers.LangManager;
+import com.neaplugins.welcomer.managers.UniquePlayerTracker;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
@@ -14,6 +15,7 @@ public final class NeaWelcomer extends JavaPlugin {
     private static NeaWelcomer instance;
     private ConfigManager configManager;
     private LangManager langManager;
+    private UniquePlayerTracker playerTracker;
     private final MiniMessage miniMessage = MiniMessage.miniMessage();
     private boolean placeholderAPIEnabled = false;
 
@@ -24,6 +26,8 @@ public final class NeaWelcomer extends JavaPlugin {
         // Initialize managers
         this.configManager = new ConfigManager(this);
         this.langManager = new LangManager(this);
+        this.playerTracker = new UniquePlayerTracker(this);
+        this.playerTracker.initializeAsync();
 
         // Load configurations
         this.configManager.load();
@@ -140,6 +144,10 @@ public final class NeaWelcomer extends JavaPlugin {
 
     public LangManager getLangManager() {
         return langManager;
+    }
+
+    public UniquePlayerTracker getPlayerTracker() {
+        return playerTracker;
     }
 
     public MiniMessage getMiniMessage() {

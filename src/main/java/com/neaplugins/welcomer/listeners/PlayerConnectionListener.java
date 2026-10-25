@@ -1,6 +1,7 @@
 package com.neaplugins.welcomer.listeners;
 
 import com.neaplugins.welcomer.NeaWelcomer;
+import com.neaplugins.welcomer.constants.Permissions;
 import com.neaplugins.welcomer.managers.ConfigManager;
 import com.neaplugins.welcomer.managers.LangManager;
 import com.neaplugins.welcomer.utils.MessageUtils;
@@ -35,9 +36,14 @@ public class PlayerConnectionListener implements Listener {
         }
 
         // Check if this is the player's first time joining
-        if (!player.hasPlayedBefore() && config.isFirstJoinEnabled()) {
-            handleFirstJoin(player);
-            return;
+        if (!player.hasPlayedBefore()) {
+            if (plugin.getPlayerTracker() != null) {
+                plugin.getPlayerTracker().incrementAndGet();
+            }
+            if (config.isFirstJoinEnabled()) {
+                handleFirstJoin(player);
+                return;
+            }
         }
 
         // Normal join
@@ -68,24 +74,25 @@ public class PlayerConnectionListener implements Listener {
         LangManager lang = plugin.getLangManager();
         ConfigManager config = plugin.getConfigManager();
 
-        // Broadcast first-join messages to all online players
+        // Broadcast first-join messages to online players with permission
         if (config.isFirstJoinBroadcast()) {
             List<String> broadcastLines = lang.getMessageList(
                 "first-join.broadcast"
             );
-            broadcastMessages(broadcastLines, player);
+            broadcastMessages(broadcastLines, player, Permissions.FIRSTJOIN_SEE);
         }
 
         // Send private welcome message only to the joining player
         List<String> privateLines = lang.getMessageList("first-join.private");
         sendPrivateMessages(player, privateLines);
 
-        // Play sound to all online players
+        // Play sound to online players with permission
         if (config.isFirstJoinSoundEnabled()) {
             playBroadcastSound(
                 config.getFirstJoinSound(),
                 config.getFirstJoinSoundVolume(),
-                config.getFirstJoinSoundPitch()
+                config.getFirstJoinSoundPitch(),
+                Permissions.FIRSTJOIN_SEE
             );
         }
 
@@ -104,22 +111,23 @@ public class PlayerConnectionListener implements Listener {
         LangManager lang = plugin.getLangManager();
         ConfigManager config = plugin.getConfigManager();
 
-        // Broadcast join message to all online players
+        // Broadcast join message to online players with permission
         if (config.isJoinBroadcast()) {
             List<String> broadcastLines = lang.getMessageList("join.broadcast");
-            broadcastMessages(broadcastLines, player);
+            broadcastMessages(broadcastLines, player, Permissions.JOIN_SEE);
         }
 
         // Send private welcome-back message only to the joining player
         List<String> privateLines = lang.getMessageList("join.private");
         sendPrivateMessages(player, privateLines);
 
-        // Play sound to all online players
+        // Play sound to online players with permission
         if (config.isJoinSoundEnabled()) {
             playBroadcastSound(
                 config.getJoinSound(),
                 config.getJoinSoundVolume(),
-                config.getJoinSoundPitch()
+                config.getJoinSoundPitch(),
+                Permissions.JOIN_SEE
             );
         }
     }
@@ -130,18 +138,19 @@ public class PlayerConnectionListener implements Listener {
         LangManager lang = plugin.getLangManager();
         ConfigManager config = plugin.getConfigManager();
 
-        // Broadcast quit message to all online players
+        // Broadcast quit message to online players with permission
         if (config.isQuitBroadcast()) {
             List<String> broadcastLines = lang.getMessageList("quit.broadcast");
-            broadcastMessages(broadcastLines, player);
+            broadcastMessages(broadcastLines, player, Permissions.QUIT_SEE);
         }
 
-        // Play sound to all online players
+        // Play sound to online players with permission
         if (config.isQuitSoundEnabled()) {
             playBroadcastSound(
                 config.getQuitSound(),
                 config.getQuitSoundVolume(),
-                config.getQuitSoundPitch()
+                config.getQuitSoundPitch(),
+                Permissions.QUIT_SEE
             );
         }
     }
@@ -150,15 +159,26 @@ public class PlayerConnectionListener implements Listener {
 
     /**
      * Broadcasts a list of messages (parsed with MiniMessage + placeholders)
-     * to all online players.
+     * to online players with the specified permission.
+     * Console always receives the broadcast for server audit logging.
+     *
+     * @param lines      The message lines to broadcast.
+     * @param player     The player triggering the broadcast.
+     * @param permission The required permission node, or null for no restriction.
      */
-    private void broadcastMessages(List<String> lines, Player player) {
+    private void broadcastMessages(
+        List<String> lines,
+        Player player,
+        String permission
+    ) {
         if (lines == null || lines.isEmpty()) return;
 
         for (String line : lines) {
             Component component = MessageUtils.parse(line, player);
             for (Player online : Bukkit.getOnlinePlayers()) {
-                online.sendMessage(component);
+                if (permission == null || online.hasPermission(permission)) {
+                    online.sendMessage(component);
+                }
             }
             // Also send to console for logging
             Bukkit.getConsoleSender().sendMessage(component);
@@ -188,16 +208,18 @@ public class PlayerConnectionListener implements Listener {
     }
 
     /**
-     * Plays a sound to all online players.
+     * Plays a sound to online players with the specified permission.
      *
-     * @param soundKey The namespaced sound key (e.g., "entity.player.levelup" or "minecraft:entity.player.levelup")
-     * @param volume   Sound volume (0.0 - 1.0+)
-     * @param pitch    Sound pitch (0.5 - 2.0)
+     * @param soundKey   The namespaced sound key (e.g., "entity.player.levelup" or "minecraft:entity.player.levelup")
+     * @param volume     Sound volume (0.0 - 1.0+)
+     * @param pitch      Sound pitch (0.5 - 2.0)
+     * @param permission The required permission node, or null for no restriction.
      */
     private void playBroadcastSound(
         String soundKey,
         float volume,
-        float pitch
+        float pitch,
+        String permission
     ) {
         if (soundKey == null || soundKey.isEmpty()) return;
 
@@ -216,7 +238,9 @@ public class PlayerConnectionListener implements Listener {
             );
 
             for (Player online : Bukkit.getOnlinePlayers()) {
-                online.playSound(sound);
+                if (permission == null || online.hasPermission(permission)) {
+                    online.playSound(sound);
+                }
             }
         } catch (Exception e) {
             plugin

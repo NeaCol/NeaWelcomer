@@ -1,6 +1,7 @@
 package com.neaplugins.welcomer.commands;
 
 import com.neaplugins.welcomer.NeaWelcomer;
+import com.neaplugins.welcomer.constants.Permissions;
 import com.neaplugins.welcomer.utils.MessageUtils;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +28,7 @@ public class WelcomerCommand implements CommandExecutor, TabCompleter {
         @NotNull String label,
         @NotNull String[] args
     ) {
-        if (!sender.hasPermission("neawelcomer.admin")) {
+        if (!sender.hasPermission(Permissions.ADMIN)) {
             String noPermMsg = plugin
                 .getLangManager()
                 .getMessage("commands.no-permission");
@@ -165,7 +166,7 @@ public class WelcomerCommand implements CommandExecutor, TabCompleter {
         @NotNull String alias,
         @NotNull String[] args
     ) {
-        if (!sender.hasPermission("neawelcomer.admin")) {
+        if (!sender.hasPermission(Permissions.ADMIN)) {
             return new ArrayList<>();
         }
 

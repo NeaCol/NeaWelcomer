@@ -1,17 +1,33 @@
 package com.neaplugins.welcomer.utils;
 
+import com.neaplugins.welcomer.NeaWelcomer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
+/**
+ * Utility class for parsing messages, colors, placeholders, and MiniMessage components.
+ * <p>
+ * Hardened against MiniMessage tag injection by evaluating dynamic player inputs
+ * as literal unparsed text or components via Adventure {@link TagResolver}, rather than
+ * naive string replacement prior to deserialization.
+ */
 public final class MessageUtils {
 
     private static final MiniMessage MINI_MESSAGE = MiniMessage.miniMessage();
+    private static final LegacyComponentSerializer AMPERSAND_SERIALIZER =
+        LegacyComponentSerializer.builder().character('&').hexColors().build();
+    private static final LegacyComponentSerializer SECTION_SERIALIZER =
+        LegacyComponentSerializer.builder().character('§').hexColors().build();
     private static final LegacyComponentSerializer LEGACY_SERIALIZER =
         LegacyComponentSerializer.builder()
             .hexColors()
@@ -27,60 +43,209 @@ public final class MessageUtils {
         "&([0-9a-fk-orA-FK-OR])"
     );
 
+    // Precompiled placeholder normalization pattern: converts {name} to <name> on templates
+    private static final Pattern BRACKET_PLACEHOLDER_PATTERN = Pattern.compile(
+        "\\{(player|displayname|rank|player_number|online|max_players|world|prefix|time)\\}",
+        Pattern.CASE_INSENSITIVE
+    );
+
     private MessageUtils() {
         // Utility class, no instantiation
     }
 
     /**
-     * Parses a raw message string into an Adventure Component.
-     * Supports MiniMessage tags, legacy &#RRGGBB hex, legacy &color codes,
-     * and PlaceholderAPI placeholders.
+     * Parses a raw message string into an Adventure Component safely using TagResolver.
+     * Dynamic user inputs (such as player names and ranks) are evaluated as unparsed text
+     * or pre-sanitized components, eliminating MiniMessage tag injection attacks.
      *
-     * @param message the raw message string
-     * @param player  the player for placeholder resolution (can be null)
-     * @return the parsed Adventure Component
+     * @param message        The raw message template.
+     * @param player         The player for placeholder resolution (can be null).
+     * @param extraResolvers Optional additional tag resolvers.
+     * @return The parsed Adventure Component.
      */
-    public static Component parse(String message, Player player) {
+    public static Component parse(
+        String message,
+        Player player,
+        TagResolver... extraResolvers
+    ) {
         if (message == null || message.isEmpty()) {
             return Component.empty();
         }
 
-        // Step 1: Replace built-in placeholders
-        if (player != null) {
-            message = applyBuiltInPlaceholders(message, player);
+        // Step 1: Expand PlaceholderAPI on the template if available
+        if (player != null && isPlaceholderAPIAvailable()) {
+            try {
+                message = PlaceholderAPI.setPlaceholders(player, message);
+            } catch (Throwable ignored) {}
         }
 
-        // Step 2: Apply PlaceholderAPI placeholders if available
-        message = applyPlaceholderAPI(message, player);
-
-        // Step 3: Convert legacy hex format &#RRGGBB -> MiniMessage <#RRGGBB>
+        // Step 2: Convert legacy hex formatting &#RRGGBB -> <#RRGGBB>
         message = convertLegacyHex(message);
 
-        // Step 4: Convert legacy color codes &a, &b, etc. -> MiniMessage equivalents
+        // Step 3: Convert legacy color codes &a -> <green>
         message = convertLegacyColors(message);
 
-        // Step 5: Parse with MiniMessage
-        return MINI_MESSAGE.deserialize(message);
+        // Step 4: Normalize bracket placeholders {tag} -> <tag> on the static template
+        message = normalizeBracketPlaceholders(message);
+
+        // Step 5: Build safe TagResolvers (protecting against MiniMessage tag injection)
+        TagResolver combinedResolver = buildTagResolver(player, extraResolvers);
+
+        // Step 6: Safely deserialize template with MiniMessage
+        return MINI_MESSAGE.deserialize(message, combinedResolver);
     }
 
     /**
-     * Parses a message without a player context (no placeholders).
+     * Parses a message with a player context.
      *
-     * @param message the raw message string
-     * @return the parsed Adventure Component
+     * @param message The raw message string.
+     * @param player  The player for placeholder resolution.
+     * @return The parsed Adventure Component.
+     */
+    public static Component parse(String message, Player player) {
+        return parse(message, player, new TagResolver[0]);
+    }
+
+    /**
+     * Parses a message with custom tag resolvers and no player context.
+     *
+     * @param message        The raw message string.
+     * @param extraResolvers Additional tag resolvers.
+     * @return The parsed Adventure Component.
+     */
+    public static Component parse(String message, TagResolver... extraResolvers) {
+        return parse(message, (Player) null, extraResolvers);
+    }
+
+    /**
+     * Parses a message without a player context.
+     *
+     * @param message The raw message string.
+     * @return The parsed Adventure Component.
      */
     public static Component parse(String message) {
-        return parse(message, null);
+        return parse(message, (Player) null, new TagResolver[0]);
+    }
+
+    /**
+     * Replaces {tag} with <tag> in the static template before any dynamic values are bound.
+     */
+    private static String normalizeBracketPlaceholders(String message) {
+        Matcher matcher = BRACKET_PLACEHOLDER_PATTERN.matcher(message);
+        StringBuilder sb = new StringBuilder();
+        while (matcher.find()) {
+            matcher.appendReplacement(sb, "<" + matcher.group(1).toLowerCase() + ">");
+        }
+        matcher.appendTail(sb);
+        return sb.toString();
+    }
+
+    /**
+     * Builds safe Adventure TagResolvers for all dynamic inputs.
+     * User inputs are passed as unparsed placeholders or pre-sanitized components,
+     * ensuring malicious tags are rendered as literal text.
+     */
+    private static TagResolver buildTagResolver(
+        Player player,
+        TagResolver... extraResolvers
+    ) {
+        List<TagResolver> resolvers = new ArrayList<>();
+
+        // Add prefix resolver
+        resolvers.add(resolvePrefixTag());
+
+        // Global stats (accessible even when player == null)
+        int uniqueCount = getUniquePlayerCount();
+        resolvers.add(Placeholder.unparsed("player_number", String.valueOf(uniqueCount)));
+
+        int onlineCount = getOnlineCount();
+        resolvers.add(Placeholder.unparsed("online", String.valueOf(onlineCount)));
+
+        int maxPlayers = getMaxPlayers();
+        resolvers.add(Placeholder.unparsed("max_players", String.valueOf(maxPlayers)));
+
+        if (player != null) {
+            String playerName = player.getName() != null ? player.getName() : "";
+            // Untrusted user input: MUST be unparsed to prevent tag injection
+            resolvers.add(Placeholder.unparsed("player", playerName));
+
+            Component displayName = null;
+            try {
+                displayName = player.displayName();
+            } catch (Throwable ignored) {}
+            if (displayName == null) {
+                displayName = Component.text(playerName);
+            }
+            resolvers.add(Placeholder.component("displayname", displayName));
+
+            // Rank: parse legacy color codes safely, treat MiniMessage tags as literal text
+            String rawRank = resolveRank(player);
+            Component rankComponent = parseLegacySafe(rawRank);
+            resolvers.add(Placeholder.component("rank", rankComponent));
+
+            String worldName = "world";
+            try {
+                if (player.getWorld() != null) {
+                    worldName = player.getWorld().getName();
+                }
+            } catch (Throwable ignored) {}
+            resolvers.add(Placeholder.unparsed("world", worldName));
+        }
+
+        if (extraResolvers != null) {
+            for (TagResolver extra : extraResolvers) {
+                if (extra != null) {
+                    resolvers.add(extra);
+                }
+            }
+        }
+
+        return TagResolver.resolver(resolvers);
+    }
+
+    /**
+     * Resolves the configured prefix into a MiniMessage component tag.
+     */
+    private static TagResolver resolvePrefixTag() {
+        try {
+            NeaWelcomer plugin = NeaWelcomer.getInstance();
+            if (plugin != null && plugin.getLangManager() != null) {
+                String rawPrefix = plugin.getLangManager().getPrefix();
+                if (rawPrefix != null && !rawPrefix.isEmpty()) {
+                    String formatted = convertLegacyHex(rawPrefix);
+                    formatted = convertLegacyColors(formatted);
+                    Component prefixComp = MINI_MESSAGE.deserialize(formatted);
+                    return Placeholder.component("prefix", prefixComp);
+                }
+            }
+        } catch (Throwable ignored) {}
+        return Placeholder.component("prefix", Component.empty());
+    }
+
+    /**
+     * Safely deserializes legacy colors (& and §) into a Component without
+     * interpreting MiniMessage tags.
+     */
+    public static Component parseLegacySafe(String input) {
+        if (input == null || input.isEmpty()) {
+            return Component.empty();
+        }
+        if (input.contains("&")) {
+            return AMPERSAND_SERIALIZER.deserialize(input);
+        }
+        if (input.contains("§")) {
+            return SECTION_SERIALIZER.deserialize(input);
+        }
+        return Component.text(input);
     }
 
     /**
      * Replaces built-in plugin placeholders in the message string and returns
-     * the resulting string (without parsing to Component). Useful when you need
-     * to do further string processing before parsing.
+     * the resulting string.
      *
-     * @param message the raw message string
-     * @param player  the player for placeholder resolution
-     * @return the message with placeholders replaced
+     * @param message The raw message string.
+     * @param player  The player for placeholder resolution.
+     * @return The message with placeholders replaced.
      */
     public static String replacePlaceholders(String message, Player player) {
         if (message == null || message.isEmpty()) {
@@ -88,72 +253,48 @@ public final class MessageUtils {
         }
 
         if (player != null) {
-            message = applyBuiltInPlaceholders(message, player);
+            String name = player.getName() != null ? player.getName() : "";
+            message = message.replace("{player}", name);
+            message = message.replace("{PLAYER}", name);
+            message = message.replace("{displayname}", getPlainDisplayName(player));
+            message = message.replace("{DISPLAYNAME}", getPlainDisplayName(player));
+            message = message.replace("{online}", String.valueOf(getOnlineCount()));
+            message = message.replace("{ONLINE}", String.valueOf(getOnlineCount()));
+            message = message.replace("{max_players}", String.valueOf(getMaxPlayers()));
+            message = message.replace("{MAX_PLAYERS}", String.valueOf(getMaxPlayers()));
+            try {
+                if (player.getWorld() != null) {
+                    message = message.replace("{world}", player.getWorld().getName());
+                    message = message.replace("{WORLD}", player.getWorld().getName());
+                }
+            } catch (Throwable ignored) {}
+
+            int playerNumber = getUniquePlayerCount();
+            message = message.replace("{player_number}", String.valueOf(playerNumber));
+            message = message.replace("{PLAYER_NUMBER}", String.valueOf(playerNumber));
+
+            String rank = resolveRank(player);
+            message = message.replace("{rank}", rank);
+            message = message.replace("{RANK}", rank);
         }
 
         message = applyPlaceholderAPI(message, player);
-
-        return message;
-    }
-
-    /**
-     * Replaces built-in plugin placeholders in the message.
-     */
-    private static String applyBuiltInPlaceholders(
-        String message,
-        Player player
-    ) {
-        message = message.replace("{player}", player.getName());
-        message = message.replace("{PLAYER}", player.getName());
-        message = message.replace("{displayname}", getPlainDisplayName(player));
-        message = message.replace("{DISPLAYNAME}", getPlainDisplayName(player));
-        message = message.replace(
-            "{online}",
-            String.valueOf(Bukkit.getOnlinePlayers().size())
-        );
-        message = message.replace(
-            "{ONLINE}",
-            String.valueOf(Bukkit.getOnlinePlayers().size())
-        );
-        message = message.replace(
-            "{max_players}",
-            String.valueOf(Bukkit.getMaxPlayers())
-        );
-        message = message.replace(
-            "{MAX_PLAYERS}",
-            String.valueOf(Bukkit.getMaxPlayers())
-        );
-        message = message.replace("{world}", player.getWorld().getName());
-        message = message.replace("{WORLD}", player.getWorld().getName());
-
-        // {player_number} placeholder — count of unique players who have ever joined
-        int playerNumber = countUniquePlayersEverJoined();
-        message = message.replace(
-            "{player_number}",
-            String.valueOf(playerNumber)
-        );
-        message = message.replace(
-            "{PLAYER_NUMBER}",
-            String.valueOf(playerNumber)
-        );
-
-        // {rank} placeholder — resolved via PlaceholderAPI if available, otherwise fallback
-        String rank = resolveRank(player);
-        message = message.replace("{rank}", rank);
-        message = message.replace("{RANK}", rank);
-
         return message;
     }
 
     /**
      * Resolves the player's rank/group using PlaceholderAPI if available.
      * Tries multiple common placeholders from Vault and LuckPerms.
-     * Falls back to "Player" if nothing is available.
+     * Falls back to OP status check or "Player".
      *
-     * @param player the player
-     * @return the rank string
+     * @param player The player.
+     * @return The rank string.
      */
-    private static String resolveRank(Player player) {
+    public static String resolveRank(Player player) {
+        if (player == null) {
+            return "Player";
+        }
+
         if (isPlaceholderAPIAvailable()) {
             try {
                 // Try vault prefix first (most common)
@@ -187,22 +328,23 @@ public final class MessageUtils {
                 if (isValidPlaceholderResult(vaultGroup, "%vault_group%")) {
                     return vaultGroup.trim();
                 }
-            } catch (Exception ignored) {
+            } catch (Throwable ignored) {
                 // Silently fail
             }
         }
 
         // Fallback: check if player is OP
-        if (player.isOp()) {
-            return "Admin";
-        }
+        try {
+            if (player.isOp()) {
+                return "Admin";
+            }
+        } catch (Throwable ignored) {}
 
         return "Player";
     }
 
     /**
-     * Checks whether a PlaceholderAPI result is a valid resolved value
-     * (i.e., not empty and not the original unresolved placeholder).
+     * Checks whether a PlaceholderAPI result is a valid resolved value.
      */
     private static boolean isValidPlaceholderResult(
         String result,
@@ -221,9 +363,14 @@ public final class MessageUtils {
      * Gets the plain text display name of a player.
      */
     private static String getPlainDisplayName(Player player) {
-        return LegacyComponentSerializer.legacySection().serialize(
-            player.displayName()
-        );
+        try {
+            if (player.displayName() != null) {
+                return LegacyComponentSerializer.legacySection().serialize(
+                    player.displayName()
+                );
+            }
+        } catch (Throwable ignored) {}
+        return player.getName() != null ? player.getName() : "";
     }
 
     /**
@@ -233,8 +380,7 @@ public final class MessageUtils {
         if (player != null && isPlaceholderAPIAvailable()) {
             try {
                 return PlaceholderAPI.setPlaceholders(player, message);
-            } catch (Exception e) {
-                // Silently fail if PAPI has issues
+            } catch (Throwable e) {
                 return message;
             }
         }
@@ -245,7 +391,10 @@ public final class MessageUtils {
      * Converts legacy &#RRGGBB hex color codes to MiniMessage format.
      * Example: &#FF5555 -> <#FF5555>
      */
-    private static String convertLegacyHex(String message) {
+    public static String convertLegacyHex(String message) {
+        if (message == null || message.isEmpty()) {
+            return "";
+        }
         Matcher matcher = LEGACY_HEX_PATTERN.matcher(message);
         StringBuilder sb = new StringBuilder();
         while (matcher.find()) {
@@ -258,7 +407,10 @@ public final class MessageUtils {
     /**
      * Converts legacy & color codes to MiniMessage tags.
      */
-    private static String convertLegacyColors(String message) {
+    public static String convertLegacyColors(String message) {
+        if (message == null || message.isEmpty()) {
+            return "";
+        }
         Matcher matcher = LEGACY_COLOR_PATTERN.matcher(message);
         StringBuilder sb = new StringBuilder();
         while (matcher.find()) {
@@ -310,14 +462,22 @@ public final class MessageUtils {
      * @return true if PlaceholderAPI is loaded and enabled
      */
     public static boolean isPlaceholderAPIAvailable() {
-        return Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null;
+        try {
+            return (
+                Bukkit.getServer() != null &&
+                Bukkit.getPluginManager() != null &&
+                Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null
+            );
+        } catch (Throwable t) {
+            return false;
+        }
     }
 
     /**
      * Strips all MiniMessage tags and legacy codes from a message, returning plain text.
      *
-     * @param message the raw message
-     * @return plain text version
+     * @param message The raw message.
+     * @return Plain text version.
      */
     public static String stripFormatting(String message) {
         if (message == null || message.isEmpty()) {
@@ -329,46 +489,55 @@ public final class MessageUtils {
     }
 
     /**
-     * Converts a Component to a legacy string (for console logging, etc.)
+     * Converts a Component to a legacy string.
      *
-     * @param component the component to serialize
-     * @return legacy formatted string
+     * @param component The component to serialize.
+     * @return Legacy formatted string.
      */
     public static String toLegacy(Component component) {
         return LEGACY_SERIALIZER.serialize(component);
     }
 
     /**
-     * Counts the total number of unique players who have ever joined the server.
-     * This includes both online and offline players.
+     * Returns the cached unique player count in O(1) non-blocking time.
+     * Completely eliminates any main-thread synchronous disk I/O.
      *
-     * @return the count of unique players
+     * @return The unique player count.
      */
-    private static int countUniquePlayersEverJoined() {
+    public static int getUniquePlayerCount() {
         try {
-            // Get all player data files from the world's playerdata folder
-            java.io.File playerdataFolder = new java.io.File(
-                Bukkit.getWorlds().get(0).getWorldFolder(),
-                "playerdata"
-            );
-
-            if (!playerdataFolder.exists()) {
+            NeaWelcomer plugin = NeaWelcomer.getInstance();
+            if (plugin != null && plugin.getPlayerTracker() != null) {
+                return plugin.getPlayerTracker().getUniquePlayerCount();
+            }
+            if (Bukkit.getServer() != null && Bukkit.getOnlinePlayers() != null) {
                 return Bukkit.getOnlinePlayers().size();
             }
+        } catch (Throwable ignored) {}
+        return 0;
+    }
 
-            // Count .dat files in the playerdata folder
-            java.io.File[] playerFiles = playerdataFolder.listFiles(
-                (dir, name) -> name.endsWith(".dat")
-            );
-
-            if (playerFiles == null) {
+    /**
+     * Gets online player count safely without throwing if Bukkit is uninitialized.
+     */
+    private static int getOnlineCount() {
+        try {
+            if (Bukkit.getServer() != null && Bukkit.getOnlinePlayers() != null) {
                 return Bukkit.getOnlinePlayers().size();
             }
+        } catch (Throwable ignored) {}
+        return 0;
+    }
 
-            return playerFiles.length;
-        } catch (Exception e) {
-            // Fallback to online player count if something goes wrong
-            return Bukkit.getOnlinePlayers().size();
-        }
+    /**
+     * Gets max players safely without throwing if Bukkit is uninitialized.
+     */
+    private static int getMaxPlayers() {
+        try {
+            if (Bukkit.getServer() != null) {
+                return Bukkit.getMaxPlayers();
+            }
+        } catch (Throwable ignored) {}
+        return 0;
     }
 }

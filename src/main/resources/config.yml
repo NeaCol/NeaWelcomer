@@ -1,73 +1,165 @@
-# ╔══════════════════════════════════════════════════════════════╗
-# ║                    NeaWelcomer v1.0.0                       ║
-# ║              Plugin de Bienvenida para Purpur               ║
-# ║                   Minecraft 1.21.1                          ║
-# ╚══════════════════════════════════════════════════════════════╝
+# ==============================================================================
+# NeaWelcomer Configuration
+# Platform: Paper / Purpur 1.21.1+
+# Documentation: https://github.com/NeaCol/NeaWelcomer
+# ==============================================================================
 
-# ─────────────────────────────────────────────
-#  Configuración General
-# ─────────────────────────────────────────────
+# ------------------------------------------------------------------------------
+# General Settings
+# ------------------------------------------------------------------------------
 
-# Desactivar los mensajes por defecto de Minecraft (join/quit)
-# Esto elimina el típico "Player joined the game" / "Player left the game"
+# Suppress default Minecraft vanilla connection messages ("Player joined/left the game")
+# Type: boolean | Default: true
 disable-default-messages: true
 
-# Soporte para PlaceholderAPI (requiere el plugin PlaceholderAPI)
-# Permite usar placeholders como %player_name%, %vault_prefix%, etc.
+# Enable PlaceholderAPI integration for external placeholders (e.g. %vault_prefix%)
+# If disabled or not installed, NeaWelcomer will use internal placeholders.
+# Type: boolean | Default: true
 placeholderapi: true
 
-# ─────────────────────────────────────────────
-#  Módulo: Primera Entrada
-# ─────────────────────────────────────────────
-# Se activa cuando un jugador entra al servidor por primera vez.
-
+# ------------------------------------------------------------------------------
+# First-Join Event
+# Dispatched when a player connects to the server for the very first time.
+# ------------------------------------------------------------------------------
 first-join:
+  # Enable or disable the entire first-join module
+  # Type: boolean | Default: true
   enabled: true
-  # Enviar mensaje a todos los jugadores conectados
+
+  # Broadcast celebration message to all online players with 'neawelcomer.firstjoin.see'
+  # Type: boolean | Default: true
   broadcast: true
 
-# ─────────────────────────────────────────────
-#  Módulo: Entrada
-# ─────────────────────────────────────────────
-# Se activa cada vez que un jugador se conecta (excepto primera vez).
+  # Send private welcome message to the joining player's chat
+  # Type: boolean | Default: true
+  private-message: true
 
+  # Display title and subtitle on the player's screen
+  title:
+    # Enable or disable first-join title display
+    # Type: boolean | Default: true
+    enabled: true
+
+    # Title animation timings in Minecraft ticks (20 ticks = 1 second)
+    # Type: integer (ticks) | Default: 10 (0.5 seconds)
+    fade-in: 10
+
+    # Duration the title remains visible on screen
+    # Type: integer (ticks) | Default: 70 (3.5 seconds)
+    stay: 70
+
+    # Duration the title takes to fade out
+    # Type: integer (ticks) | Default: 20 (1.0 second)
+    fade-out: 20
+
+  # Display action bar message above the player's hotbar
+  actionbar:
+    # Enable or disable first-join action bar display
+    # Type: boolean | Default: true
+    enabled: true
+
+# ------------------------------------------------------------------------------
+# Normal Join Event
+# Dispatched on recurring connections (players who have played before).
+# ------------------------------------------------------------------------------
 join:
+  # Enable or disable the entire join module
+  # Type: boolean | Default: true
   enabled: true
+
+  # Broadcast join message to all online players with 'neawelcomer.join.see'
+  # Type: boolean | Default: true
   broadcast: true
 
-# ─────────────────────────────────────────────
-#  Módulo: Salida
-# ─────────────────────────────────────────────
-# Se activa cuando un jugador se desconecta.
+  # Send private welcome-back message to the joining player's chat
+  # Type: boolean | Default: true
+  private-message: true
 
+  # Display title and subtitle on the player's screen
+  title:
+    # Enable or disable recurring join title display
+    # Type: boolean | Default: true
+    enabled: true
+
+    # Title animation timings in Minecraft ticks (20 ticks = 1 second)
+    # Type: integer (ticks) | Default: 10 (0.5 seconds)
+    fade-in: 10
+
+    # Duration the title remains visible on screen
+    # Type: integer (ticks) | Default: 70 (3.5 seconds)
+    stay: 70
+
+    # Duration the title takes to fade out
+    # Type: integer (ticks) | Default: 20 (1.0 second)
+    fade-out: 20
+
+  # Display action bar message above the player's hotbar
+  actionbar:
+    # Enable or disable recurring join action bar display
+    # Type: boolean | Default: true
+    enabled: true
+
+# ------------------------------------------------------------------------------
+# Quit Event
+# Dispatched when a player disconnects from the server.
+# ------------------------------------------------------------------------------
 quit:
+  # Enable or disable the entire quit module
+  # Type: boolean | Default: true
   enabled: true
+
+  # Broadcast quit message to all online players with 'neawelcomer.quit.see'
+  # Type: boolean | Default: true
   broadcast: true
 
-# ─────────────────────────────────────────────
-#  Sonidos
-# ─────────────────────────────────────────────
-# Reproduce un sonido cuando ocurre un evento.
-# Lista de sonidos: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html
-
+# ------------------------------------------------------------------------------
+# Sound Effects
+# Configures audio feedback dispatched during connection events.
+# Sounds are played only to players with the respective visibility permission.
+# Valid sound identifiers: https://jd.papermc.io/paper/1.21.1/org/bukkit/Sound.html
+# ------------------------------------------------------------------------------
 sounds:
-  # Sonido al entrar por primera vez
+  # Sound played when a player joins for the very first time
   first-join:
+    # Enable or disable first-join sound playback
+    # Type: boolean | Default: false
     enabled: false
+    # Sound identifier from org.bukkit.Sound
+    # Type: string | Default: "ENTITY_PLAYER_LEVELUP"
     sound: "ENTITY_PLAYER_LEVELUP"
+    # Audio volume
+    # Type: float | Range: 0.0 - 2.0 | Default: 1.0
     volume: 1.0
+    # Audio pitch (playback speed)
+    # Type: float | Range: 0.5 - 2.0 | Default: 1.0
     pitch: 1.0
 
-  # Sonido al entrar
+  # Sound played when a recurring player joins
   join:
+    # Enable or disable join sound playback
+    # Type: boolean | Default: false
     enabled: false
+    # Sound identifier from org.bukkit.Sound
+    # Type: string | Default: "ENTITY_EXPERIENCE_ORB_PICKUP"
     sound: "ENTITY_EXPERIENCE_ORB_PICKUP"
+    # Audio volume
+    # Type: float | Range: 0.0 - 2.0 | Default: 1.0
     volume: 1.0
+    # Audio pitch (playback speed)
+    # Type: float | Range: 0.5 - 2.0 | Default: 1.0
     pitch: 1.0
 
-  # Sonido al salir
+  # Sound played when a player disconnects
   quit:
+    # Enable or disable quit sound playback
+    # Type: boolean | Default: false
     enabled: false
+    # Sound identifier from org.bukkit.Sound
+    # Type: string | Default: "BLOCK_NOTE_BLOCK_BASS"
     sound: "BLOCK_NOTE_BLOCK_BASS"
+    # Audio volume
+    # Type: float | Range: 0.0 - 2.0 | Default: 1.0
     volume: 1.0
+    # Audio pitch (playback speed)
+    # Type: float | Range: 0.5 - 2.0 | Default: 1.0
     pitch: 1.0

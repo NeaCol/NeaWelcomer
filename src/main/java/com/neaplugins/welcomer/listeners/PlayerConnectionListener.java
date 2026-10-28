@@ -82,6 +82,18 @@ public class PlayerConnectionListener implements Listener {
                 "first-join.broadcast"
             );
             broadcastMessages(broadcastLines, player, Permissions.FIRSTJOIN_SEE);
+
+            if (config.isFirstJoinWelcomeButton()) {
+                String buttonMsg = lang.getMessage("first-join.welcome-button");
+                if (buttonMsg != null && !buttonMsg.isEmpty()) {
+                    Component buttonComp = MessageUtils.parse(buttonMsg, player);
+                    for (Player online : Bukkit.getOnlinePlayers()) {
+                        if (!online.getUniqueId().equals(player.getUniqueId()) && online.hasPermission(Permissions.FIRSTJOIN_SEE)) {
+                            online.sendMessage(buttonComp);
+                        }
+                    }
+                }
+            }
         }
 
         // Deliver private messages, title, and action bar delayed by 5 ticks

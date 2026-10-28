@@ -70,6 +70,9 @@ first-join:
     - "  <dark_gray>   ¡Es el jugador número <#7C4DFF><bold>#{player_number}</bold> <dark_gray>en el servidor!"
     - ""
 
+  # Clickable action button appended to first-join broadcast for other players
+  welcome-button: "  <click:suggest_command:'/w {player} ¡Bienvenido al servidor!'><hover:show_text:'<gradient:#7C4DFF:#00BCD4>Haz clic para enviar un saludo a {player}</gradient>'><b><#B388FF>[¡Saludar a {player}!]</#B388FF></b></hover></click>"
+
   # Private message sent only to the connecting player
   private:
     - ""

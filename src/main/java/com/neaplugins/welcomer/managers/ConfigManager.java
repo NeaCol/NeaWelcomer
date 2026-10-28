@@ -13,6 +13,7 @@ public class ConfigManager {
     // First join
     private boolean firstJoinEnabled = true;
     private boolean firstJoinBroadcast = true;
+    private boolean firstJoinWelcomeButton = true;
     private boolean firstJoinPrivateMessage = true;
     private boolean firstJoinTitleEnabled = true;
     private long firstJoinTitleFadeIn = 10L;
@@ -78,6 +79,10 @@ public class ConfigManager {
         this.firstJoinEnabled = config.getBoolean("first-join.enabled", true);
         this.firstJoinBroadcast = config.getBoolean(
             "first-join.broadcast",
+            true
+        );
+        this.firstJoinWelcomeButton = config.getBoolean(
+            "first-join.welcome-button",
             true
         );
         this.firstJoinPrivateMessage = config.getBoolean(
@@ -198,6 +203,10 @@ public class ConfigManager {
 
     public boolean isFirstJoinBroadcast() {
         return firstJoinBroadcast;
+    }
+
+    public boolean isFirstJoinWelcomeButton() {
+        return firstJoinWelcomeButton;
     }
 
     public boolean isFirstJoinPrivateMessage() {

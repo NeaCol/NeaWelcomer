@@ -30,6 +30,10 @@ first-join:
   # Type: boolean | Default: true
   broadcast: true
 
+  # Display interactive click-to-welcome action in first-join broadcast
+  # Type: boolean | Default: true
+  welcome-button: true
+
   # Send private welcome message to the joining player's chat
   # Type: boolean | Default: true
   private-message: true

@@ -59,6 +59,16 @@ public final class NeaWelcomer extends JavaPlugin {
             );
         }
 
+        // Initialize bStats Metrics
+        if (configManager.isMetricsEnabled()) {
+            try {
+                new com.neaplugins.welcomer.metrics.Metrics(this, 34682);
+                getLogger().info("bStats metrics enabled.");
+            } catch (Exception e) {
+                getLogger().warning("Could not initialize bStats: " + e.getMessage());
+            }
+        }
+
         // Startup message
         sendStartupMessage();
     }

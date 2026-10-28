@@ -12,6 +12,10 @@
 # Type: boolean | Default: true
 disable-default-messages: true
 
+# Enable anonymous metrics collection via bStats.
+# Type: boolean | Default: true
+metrics: true
+
 # Enable PlaceholderAPI integration for external placeholders (e.g. %vault_prefix%)
 # If disabled or not installed, NeaWelcomer will use internal placeholders.
 # Type: boolean | Default: true

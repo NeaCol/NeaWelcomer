@@ -9,6 +9,7 @@ public class ConfigManager {
 
     // General
     private boolean disableDefaultMessages;
+    private boolean metricsEnabled = true;
 
     // First join
     private boolean firstJoinEnabled = true;
@@ -74,6 +75,7 @@ public class ConfigManager {
             "disable-default-messages",
             true
         );
+        this.metricsEnabled = config.getBoolean("metrics", true);
 
         // First join
         this.firstJoinEnabled = config.getBoolean("first-join.enabled", true);
@@ -193,6 +195,10 @@ public class ConfigManager {
 
     public boolean isDisableDefaultMessages() {
         return disableDefaultMessages;
+    }
+
+    public boolean isMetricsEnabled() {
+        return metricsEnabled;
     }
 
     // ─── First Join ─────────────────────────────────────────────

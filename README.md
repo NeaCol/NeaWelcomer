@@ -1,7 +1,16 @@
+<div align="center">
+
 ![Java](https://img.shields.io/badge/Java-21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
 ![Paper](https://img.shields.io/badge/Paper%20%2F%20Purpur-1.21.1-1B1E2B?style=for-the-badge&logo=apachemaven&logoColor=white)
 ![Adventure](https://img.shields.io/badge/Adventure-MiniMessage-5B5FFF?style=for-the-badge)
+![bStats](https://img.shields.io/badge/bStats-Telemetry-00AF5C?style=for-the-badge&logo=chartdotjs&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-brightgreen?style=for-the-badge)
+
+<p align="center">
+  <img src="https://skillicons.dev/icons?i=java,maven,git,linux,bash&theme=dark" alt="Supported Tech Stack" />
+</p>
+
+</div>
 
 [English](#english) | [Español](#español)
 
